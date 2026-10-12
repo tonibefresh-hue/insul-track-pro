@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsulTrack Pro - Private Contractor Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#131c2e',
+                            900: '#0f172a',
+                            950: '#080d1a',
+                        },
+                        amber: {
+                            450: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Admin Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .canvas-touch-none { touch-action: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080d1a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="h-full flex flex-col text-slate-100 overflow-hidden select-none">
+
+    <header class="bg-slate-900 border-b border-slate-800 px-4 lg:px-6 py-3 flex items-center justify-between shrink-0 z-30 shadow-2xl">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-amber-600 to-amber-500 p-2.5 rounded-xl text-slate-950 font-black shadow-lg flex items-center justify-center">
+                <i class="fa-solid fa-fire-burner text-xl"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="font-extrabold text-lg lg:text-xl tracking-tight text-white">InsulTrack <span class="text-amber-500">Pro</span></h1>
+                    <span id="access-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase tracking-wider">
+                        Private Portal
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400 hidden sm:block">Industrial Insulation Management System</p>
+            </div>
+        </div>
+
+        <!-- Role Toggle & Active User Bar -->
+        <div class="flex items-center space-x-3">
+            <!-- Clock Status Indicator Pill -->
+            <div id="top-clock-indicator" class="hidden sm:flex items-center space-x-2 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                <span id="top-clock-dot" class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span id="top-clock-text" class="text-xs font-semibold text-slate-300">Clocked Out</span>
+                <span id="top-clock-timer" class="text-xs font-mono font-bold text-amber-400">00:00:00</span>
+            </div>
+
+            <!-- Role Mode Switcher -->
+            <div class="bg-slate-950 p-1 rounded-xl border border-slate-800 flex items-center">
+                <button onclick="setRole('installer')" id="role-btn-installer" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-amber-500 text-slate-950 shadow">
+                    <i class="fa-solid fa-hard-hat"></i>
+                    <span>Installer</span>
+                </button>
+                <button onclick="setRole('admin')" id="role-btn-admin" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Admin / Owner</span>
+                </button>
+            </div>
+
+            <!-- Current User Profile Menu -->
+            <div class="relative">
+                <button onclick="toggleUserMenu()" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-750 px-3 py-1.5 rounded-xl border border-slate-700 transition">
+                    <div id="user-avatar" class="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shadow">
+                        JD
+                    </div>
+                    <div class="text-left hidden md:block">
+                        <div id="user-display-name" class="text-xs font-bold text-white">John Doe</div>
+                        <div id="user-display-title" class="text-[10px] text-amber-400 font-medium">Lead Foam Applicator</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
+                    <div class="px-4 py-2 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                        Select Active Field User
+                    </div>
+                    <button onclick="switchUser('John Doe', 'Lead Foam Applicator', 'installer', 'JD')" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 flex items-center space-x-3 transition">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-xs">JD</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">John Doe</p>
+                            <p class="text-[10px] text-slate-400">Installer • Crew Alpha (Spray Foam)</p>
+                        </div>
+                    </button>
+                    <button onclick="switchUser('Mike Vance', 'Batt & Blow Tech', 'installer', 'MV')" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 flex items-center space-x-3 transition">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500 text-white font-bold flex items-center justify-center text-xs">MV</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Mike Vance</p>
+                            <p class="text-[10px] text-slate-400">Installer • Crew Beta (Blown-In)</p>
+                        </div>
+                    </button>
+                    <div class="px-4 py-2 border-t border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-1">
+                        Management Access
+                    </div>
+                    <button onclick="switchUser('Sarah Jenkins', 'Owner / Operations Director', 'admin', 'SJ')" class="w-full text-left px-4 py-2.5 hover:bg-slate-800 flex items-center space-x-3 transition">
+                        <div class="w-8 h-8 rounded-lg bg-purple-600 text-white font-bold flex items-center justify-center text-xs">SJ</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Sarah Jenkins</p>
+                            <p class="text-[10px] text-purple-400">Owner & Director</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-slate-900/90 border-b border-slate-800 px-4 lg:px-6 py-2 flex items-center justify-between shrink-0 overflow-x-auto">
+        <!-- Field Installer View Navigation -->
+        <nav id="nav-installer" class="flex items-center space-x-2 shrink-0">
+            <button onclick="switchTab('timeclock')" id="tab-timeclock" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-amber-500 text-slate-950 shadow">
+                <i class="fa-solid fa-stopwatch text-sm"></i>
+                <span>Field Clock & GPS</span>
+            </button>
+            <button onclick="switchTab('schedule')" id="tab-schedule" class="px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-calendar-check text-sm"></i>
+                <span>Weekly Jobs & Tasks</span>
+            </button>
+            <button onclick="switchTab('profile')" id="tab-profile" class="px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-user-gear text-sm"></i>
+                <span>My Profile & Velocity</span>
+            </button>
+        </nav>
+
+        <!-- Admin View Navigation -->
+        <nav id="nav-admin" class="flex items-center space-x-2 shrink-0 hidden">
+            <button onclick="switchAdminTab('revenue')" id="atab-revenue" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 bg-amber-500 text-slate-950 shadow">
+                <i class="fa-solid fa-chart-line text-sm"></i>
+                <span>Revenue & Analytics</span>
+            </button>
+            <button onclick="switchAdminTab('dispatch')" id="atab-dispatch" class="px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-truck-fast text-sm"></i>
+                <span>Job Dispatch & Crews</span>
+            </button>
+            <button onclick="switchAdminTab('inventory')" id="atab-inventory" class="px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-boxes-stacked text-sm"></i>
+                <span>Material Tracking & Stock</span>
+            </button>
+            <button onclick="switchAdminTab('oversight')" id="atab-oversight" class="px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2">
+                <i class="fa-solid fa-map-location-dot text-sm"></i>
+                <span>Live Employee GPS</span>
+            </button>
+        </nav>
+
+        <!-- Dynamic Context Badge -->
+        <div id="live-time-display" class="hidden xl:flex items-center space-x-2 text-xs text-slate-400 font-mono bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">
+            <i class="fa-regular fa-clock text-amber-500"></i>
+            <span id="current-timestamp-lbl">Oct 11, 2026 • 08:00 AM</span>
+        </div>
+    </div>
+
+    <main class="flex-1 overflow-hidden bg-slate-950 relative">
+
+        <!-- VIEW 1: FIELD CLOCK & GPS TRACKING -->
+        <section id="view-timeclock" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <!-- Clock Banner Control Card -->
+                <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-6 lg:p-8 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-8 opacity-5">
+                        <i class="fa-solid fa-satellite-dish text-9xl text-amber-500"></i>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                        <div class="flex items-center space-x-5 text-center md:text-left">
+                            <div id="clock-pulse-outer" class="w-20 h-20 rounded-2xl bg-slate-800 border-2 border-rose-500/40 flex items-center justify-center text-rose-500 text-3xl shadow-2xl transition-all">
+                                <i id="clock-icon" class="fa-solid fa-power-off"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center space-x-2 justify-center md:justify-start">
+                                    <h2 id="clock-main-title" class="text-xl font-extrabold text-white">Status: Clocked Out</h2>
+                                    <span id="clock-gps-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                                        GPS Offline
+                                    </span>
+                                </div>
+                                <p id="clock-subtitle" class="text-xs text-slate-400">Clock in to automatically record location, job timer, and daily progress.</p>
+                                <p id="clock-active-job-lbl" class="text-xs font-bold text-amber-400 hidden"><i class="fa-solid fa-briefcase mr-1.5"></i>Active Assignment: 1042 Oakridge Villa (Attic Spray Foam)</p>
+                            </div>
+                        </div>
+
+                        <!-- Main Clock CTA Button -->
+                        <button onclick="toggleClockState()" id="clock-toggle-btn" class="w-full md:w-auto px-8 py-4 rounded-2xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/50 transition-all flex items-center justify-center space-x-3 border border-emerald-400/30">
+                            <i class="fa-solid fa-play text-base"></i>
+                            <span id="clock-btn-lbl">Clock In & Start GPS</span>
+                        </button>
+                    </div>
+
+                    <!-- GPS Telemetry Bar -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-800/80 text-xs">
+                        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800/60">
+                            <span class="text-slate-400 text-[10px] block font-semibold uppercase">GPS Coordinates</span>
+                            <span id="gps-coords-display" class="font-mono text-slate-200 font-bold">34.0522° N, 118.2437° W</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800/60">
+                            <span class="text-slate-400 text-[10px] block font-semibold uppercase">Geofence Site Verification</span>
+                            <span id="gps-geofence-display" class="text-emerald-400 font-bold flex items-center mt-0.5">
+                                <i class="fa-solid fa-shield-halved text-[10px] mr-1.5"></i>Verified On-Site
+                            </span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800/60">
+                            <span class="text-slate-400 text-[10px] block font-semibold uppercase">Shift Duration Today</span>
+                            <span id="shift-timer-display" class="font-mono text-amber-400 font-extrabold text-sm">00:00:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Shift Logs -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
+                            <span>Recent Field Shifts & GPS Logs</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">This Pay Period</span>
+                    </div>
+
+                    <div id="shift-logs-container" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-schedule" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-white tracking-tight">Assigned Weekly Schedule</h2>
+                    <p class="text-xs text-slate-400">Complete materials checklists, step-by-step task execution, and digital customer sign-offs.</p>
+                </div>
+                <div class="flex items-center space-x-2 text-xs bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl shadow">
+                    <i class="fa-solid fa-calendar-days text-amber-500"></i>
+                    <span class="text-slate-200 font-bold">Week 41 • Oct 11 - Oct 17, 2026</span>
+                </div>
+            </div>
+
+            <!-- Job Cards Grid -->
+            <div id="installer-jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <section id="view-profile" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <!-- Profile Header Banner -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 lg:p-8 shadow-2xl flex flex-col md:flex-row items-center gap-6">
+                    <div class="w-24 h-24 rounded-2xl bg-amber-500 text-slate-950 font-black text-3xl flex items-center justify-center shadow-xl shrink-0">
+                        JD
+                    </div>
+                    <div class="flex-1 text-center md:text-left space-y-2">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <h2 class="text-2xl font-bold text-white">John Doe</h2>
+                            <span class="px-3 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-full text-xs font-bold self-center md:self-auto">
+                                Tier-1 Master Foam Applicator
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-400">Employee ID: INS-9042 • Crew Alpha Lead • Member since March 2022</p>
+                        <div class="flex flex-wrap gap-6 pt-2 justify-center md:justify-start text-xs">
+                            <div><strong class="text-white text-sm">38.5 hrs</strong> <span class="text-slate-400 block text-[10px]">Worked This Week</span></div>
+                            <div><strong class="text-white text-sm">14 Jobs</strong> <span class="text-slate-400 block text-[10px]">Completed This Month</span></div>
+                            <div><strong class="text-emerald-400 text-sm">96.4%</strong> <span class="text-slate-400 block text-[10px]">Efficiency Index</span></div>
+                            <div><strong class="text-amber-400 text-sm">+$450.00</strong> <span class="text-slate-400 block text-[10px]">Accrued Performance Bonus</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Certifications Portal -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-award text-amber-500"></i>
+                            <span>Industry Certifications</span>
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl"><i class="fa-solid fa-shield-virus"></i></div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">SPFA Spray Foam Master Applicator</p>
+                                        <p class="text-[10px] text-slate-400">Spray Polyurethane Foam Alliance • Exp: Dec 2028</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-bold">Active</span>
+                            </div>
+                            <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-emerald-500/20 text-emerald-400 rounded-xl"><i class="fa-solid fa-hard-hat"></i></div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">OSHA 30 Construction Safety</p>
+                                        <p class="text-[10px] text-slate-400">U.S. Dept of Labor • Lifetime Certification</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-bold">Active</span>
+                            </div>
+                            <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="p-2 bg-amber-500/20 text-amber-400 rounded-xl"><i class="fa-solid fa-building"></i></div>
+                                    <div>
+                                        <p class="text-xs font-bold text-white">BPI Building Analyst Professional</p>
+                                        <p class="text-[10px] text-slate-400">Building Performance Institute • Exp: Aug 2027</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-bold">Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Continuous Education Tracker -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-graduation-cap text-amber-500"></i>
+                            <span>Continuing Education & Training</span>
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-bold text-white">Thermal Imaging & Leak Diagnostics</span>
+                                    <span class="text-emerald-400 font-bold">Completed (8 CEU)</span>
+                                </div>
+                                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-500 h-full w-full"></div>
+                                </div>
+                            </div>
+                            <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800/80 space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span class="font-bold text-white">Crawlspace Encapsulation & Mold Prevention</span>
+                                    <span class="text-amber-400 font-bold">In Progress (75%)</span>
+                                </div>
+                                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                                    <div class="bg-amber-500 h-full w-[75%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Speed & Velocity Analytics -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-bolt text-amber-500"></i>
+                            <span>Task Execution Velocity & Strengths Analysis</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">Automated Performance Calculations</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                            <span class="text-xs font-semibold text-slate-300">Open-Cell Roof Deck Spray</span>
+                            <div class="text-2xl font-black text-emerald-400">38 mins <span class="text-xs font-normal text-slate-400">/ 500 sq ft</span></div>
+                            <p class="text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-circle-arrow-up mr-1"></i>22% faster than company average (Top Strength)</p>
+                        </div>
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                            <span class="text-xs font-semibold text-slate-300">Vapor Barrier Poly Sealing</span>
+                            <div class="text-2xl font-black text-amber-400">55 mins <span class="text-xs font-normal text-slate-400">/ 1000 sq ft</span></div>
+                            <p class="text-[10px] text-amber-400 font-bold"><i class="fa-solid fa-equals mr-1"></i>Matches standard crew pace</p>
+                        </div>
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                            <span class="text-xs font-semibold text-slate-300">Fiberglass Wall Batt Friction Fit</span>
+                            <div class="text-2xl font-black text-rose-400">68 mins <span class="text-xs font-normal text-slate-400">/ 10 bays</span></div>
+                            <p class="text-[10px] text-rose-400 font-bold"><i class="fa-solid fa-circle-arrow-down mr-1"></i>11% slower (Target for coaching)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        
+        <!-- ADMIN VIEW 1: REVENUE & PERFORMANCE ANALYTICS -->
+        <section id="aview-revenue" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <!-- Top Revenue KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+                        <span>Weekly Gross Revenue</span>
+                        <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><i class="fa-solid fa-dollar-sign"></i></div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-white">$64,800.00</div>
+                    <span class="text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-arrow-trend-up mr-1"></i>+18.4% vs target</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+                        <span>Average Profit Margin</span>
+                        <div class="p-2 bg-amber-500/10 text-amber-500 rounded-lg"><i class="fa-solid fa-percent"></i></div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-white">41.2%</div>
+                    <span class="text-[10px] text-amber-400 font-bold">Spray Foam highest at 48%</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+                        <span>Completed Jobs</span>
+                        <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><i class="fa-solid fa-clipboard-check"></i></div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-white">16 / 18 Jobs</div>
+                    <span class="text-[10px] text-blue-400 font-bold">88.8% on-time completion</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold">
+                        <span>Crew Bonus Pool</span>
+                        <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg"><i class="fa-solid fa-trophy"></i></div>
+                    </div>
+                    <div class="text-2xl font-extrabold text-white">$1,850.00</div>
+                    <span class="text-[10px] text-purple-400 font-bold">Based on velocity benchmarks</span>
+                </div>
+            </div>
+
+            <!-- Chart & Leaderboard Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Revenue Chart -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-chart-area text-amber-500"></i>
+                            <span>Revenue Breakdown by Insulation Service Line</span>
+                        </h3>
+                        <span class="text-xs text-slate-400">October 2026</span>
+                    </div>
+                    <div class="h-64 relative">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Productivity Leaderboard -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-ranking-star text-amber-500"></i>
+                        <span>Installer Efficiency Ranking</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 h-6 rounded-lg bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs">1</span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">John Doe</p>
+                                    <p class="text-[10px] text-slate-400">96.4% Efficiency • 38.5 hrs</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-emerald-400">+$450 Bonus</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 h-6 rounded-lg bg-slate-700 text-white font-bold flex items-center justify-center text-xs">2</span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">Mike Vance</p>
+                                    <p class="text-[10px] text-slate-400">92.1% Efficiency • 40.0 hrs</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-emerald-400">+$300 Bonus</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="w-6 h-6 rounded-lg bg-slate-800 text-white font-bold flex items-center justify-center text-xs">3</span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">Alex Rivera</p>
+                                    <p class="text-[10px] text-slate-400">89.5% Efficiency • 36.0 hrs</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold text-emerald-400">+$150 Bonus</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 2: DISPATCH & CREW MANAGEMENT -->
+        <section id="aview-dispatch" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Master Job Dispatch & Crew Assignments</h2>
+                    <p class="text-xs text-slate-400">Assign lead installers, allocate material reserves, and track real-time task progress.</p>
+                </div>
+                <button onclick="triggerDispatchModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-450 text-slate-950 font-extrabold rounded-xl text-xs transition shadow flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Schedule New Job</span>
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-4 font-bold">Client & Site Address</th>
+                                <th class="p-4 font-bold">Service Type</th>
+                                <th class="p-4 font-bold">Assigned Crew</th>
+                                <th class="p-4 font-bold">Progress</th>
+                                <th class="p-4 font-bold">Status</th>
+                                <th class="p-4 font-bold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-jobs-table-body" class="divide-y divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 3: MATERIAL TRACKING & INVENTORY -->
+        <section id="aview-inventory" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Material Inventory & Chemical Stock</h2>
+                    <p class="text-xs text-slate-400">Live deduction of spray foam chemicals, fiberglass batts, poly sheeting, and safety gear.</p>
+                </div>
+                <button onclick="triggerRestockModal()" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-450 text-slate-950 font-extrabold rounded-xl text-xs transition shadow flex items-center space-x-2">
+                    <i class="fa-solid fa-truck-loading"></i>
+                    <span>Restock Material Order</span>
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-4 font-bold">Material Item</th>
+                                <th class="p-4 font-bold">Category</th>
+                                <th class="p-4 font-bold">In Warehouse</th>
+                                <th class="p-4 font-bold">Allocated to Active Jobs</th>
+                                <th class="p-4 font-bold">Stock Warning Level</th>
+                                <th class="p-4 font-bold text-right">Unit Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-inventory-table-body" class="divide-y divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN VIEW 4: LIVE GPS OVERSIGHT -->
+        <section id="aview-oversight" class="h-full overflow-y-auto p-4 lg:p-8 space-y-6 hidden">
+            <div>
+                <h2 class="text-xl font-extrabold text-white">Live Field Crew Geolocation Oversight</h2>
+                <p class="text-xs text-slate-400">Real-time geofence tracking of active installers and location verification.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Map Container Simulation -->
+                <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+                    <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-map-location-dot text-amber-500"></i>
+                        <span>Live GPS Crew Positions</span>
+                    </h3>
+                    <div class="w-full h-80 bg-slate-950 rounded-2xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
+                        <!-- Simulated Grid Map Texture -->
+                        <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                        
+                        <!-- Map Marker 1: Crew Alpha -->
+                        <div class="absolute top-1/3 left-1/3 bg-slate-900/90 border border-amber-500 p-3 rounded-2xl shadow-2xl flex items-center space-x-3 animate-pulse">
+                            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-ping"></div>
+                            <div>
+                                <p class="text-xs font-bold text-white">Crew Alpha (John Doe)</p>
+                                <p class="text-[10px] text-amber-400">1042 Oakridge Villa • Active 2.5 hrs</p>
+                            </div>
+                        </div>
+
+                        <!-- Map Marker 2: Crew Beta -->
+                        <div class="absolute bottom-1/3 right-1/3 bg-slate-900/90 border border-blue-500 p-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+                            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                            <div>
+                                <p class="text-xs font-bold text-white">Crew Beta (Mike Vance)</p>
+                                <p class="text-[10px] text-blue-400">884 Commerce Way • Active 4.1 hrs</p>
+                            </div>
+                        </div>
+
+                        <div class="absolute bottom-3 left-3 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 text-[10px] text-slate-400">
+                            <i class="fa-solid fa-satellite text-emerald-400 mr-1.5"></i>Live Telemetry Stream Active
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clocked In Crew Log -->
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+                    <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-users text-amber-500"></i>
+                        <span>Active Field Staff</span>
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">John Doe</p>
+                                    <p class="text-[10px] text-slate-400">Clocked In 07:30 AM</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-bold">On Site</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">Mike Vance</p>
+                                    <p class="text-[10px] text-slate-400">Clocked In 07:15 AM</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-bold">On Site</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                                <div>
+                                    <p class="text-xs font-bold text-white">Alex Rivera</p>
+                                    <p class="text-[10px] text-slate-400">Clocked Out</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] px-2 py-0.5 bg-rose-500/20 text-rose-300 rounded font-bold">Off Duty</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    
+    <!-- MODAL 1: JOB TASK BREAKDOWN & MATERIAL CHECKLIST -->
+    <div id="modal-task-breakdown" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div>
+                    <h3 id="mtb-title" class="text-base font-extrabold text-white">Job Task Breakdown</h3>
+                    <p id="mtb-subtitle" class="text-xs text-slate-400">1042 Oakridge Villa • Attic Open-Cell Spray Foam</p>
+                </div>
+                <button onclick="closeTaskModal()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <!-- Summary Card -->
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Assigned Crew:</span>
+                        <span id="mtb-crew" class="text-white font-bold">John Doe (Lead)</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Installation Target Area:</span>
+                        <span id="mtb-location" class="text-amber-400 font-bold">Attic Roof Deck & Gable Ends</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-400">Task Completion Rate:</span>
+                        <span id="mtb-progress-lbl" class="text-emerald-400 font-bold">2 / 4 Completed (50%)</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                        <div id="mtb-progress-bar" class="bg-amber-500 h-full rounded-full transition-all" style="width: 50%"></div>
+                    </div>
+                </div>
+
+                <!-- Tasks & Materials Breakdown List -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Step-by-Step Task & Material Execution</h4>
+                    <div id="mtb-tasks-list" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Walkthrough Unlock Trigger -->
+                <div id="mtb-walkthrough-banner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-emerald-400">All Job Tasks Complete!</h4>
+                        <p class="text-[10px] text-slate-300">Unlock final walkthrough inspection & digital customer sign-off.</p>
+                    </div>
+                    <button onclick="openWalkthroughModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow flex items-center space-x-2">
+                        <i class="fa-solid fa-signature"></i>
+                        <span>Start Customer Walkthrough</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950 px-6 py-4 border-t border-slate-800 flex justify-end shrink-0">
+                <button onclick="closeTaskModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition">
+                    Close Breakdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CUSTOMER DIGITAL SIGN-OFF & WALKTHROUGH -->
+    <div id="modal-walkthrough" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Final Customer Walkthrough & Sign-off</h3>
+                    <p class="text-xs text-slate-400">Verify thermal installation quality and collect digital authorization signature.</p>
+                </div>
+                <button onclick="closeWalkthroughModal()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <!-- Quality Verification Checklist -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Installer Quality Checklist</h4>
+                    <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                        <input type="checkbox" class="wt-check-item w-4 h-4 accent-amber-500 rounded" onchange="validateWalkthrough()">
+                        <span class="text-xs text-slate-200">Thermal depth and target R-value verified according to job specifications.</span>
+                    </label>
+                    <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                        <input type="checkbox" class="wt-check-item w-4 h-4 accent-amber-500 rounded" onchange="validateWalkthrough()">
+                        <span class="text-xs text-slate-200">Site thoroughly cleaned, overspray removed, and masking poly disposed of.</span>
+                    </label>
+                    <label class="flex items-center space-x-3 p-3 bg-slate-950 rounded-xl border border-slate-800 cursor-pointer">
+                        <input type="checkbox" class="wt-check-item w-4 h-4 accent-amber-500 rounded" onchange="validateWalkthrough()">
+                        <span class="text-xs text-slate-200">Customer physical walk-through completed with satisfaction confirmed.</span>
+                    </label>
+                </div>
+
+                <!-- Digital Canvas Signature Pad -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Customer Digital Signature</label>
+                        <button onclick="clearSignatureCanvas()" class="text-[10px] text-amber-400 hover:underline">Clear Signature</button>
+                    </div>
+                    <div class="border-2 border-dashed border-slate-700 bg-slate-950 rounded-2xl overflow-hidden relative">
+                        <canvas id="sig-canvas" class="canvas-touch-none w-full h-36 cursor-crosshair"></canvas>
+                        <span class="absolute bottom-2 right-3 text-[10px] text-slate-600 pointer-events-none">Sign Above</span>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-300">Customer Full Printed Name</label>
+                    <input type="text" id="customer-name-input" placeholder="e.g. Robert Johnson" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <div class="bg-slate-950 px-6 py-4 border-t border-slate-800 flex justify-end space-x-3 shrink-0">
+                <button onclick="closeWalkthroughModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">Cancel</button>
+                <button onclick="finalizeJobSignoff()" id="btn-finalize-job" disabled class="px-5 py-2 bg-amber-500/40 text-slate-950 font-bold rounded-xl text-xs transition cursor-not-allowed">
+                    Finalize & Complete Job
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-banner" class="fixed bottom-6 right-6 z-50 hidden bg-slate-900 border border-amber-500/50 px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-xs text-white">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toast-text">Operation completed successfully.</span>
+    </div>
+
+    <script>
+        // Application Global State
+        let currentRole = 'installer'; // 'installer' or 'admin'
+        let isClockedIn = false;
+        let clockTimerInterval = null;
+        let clockSeconds = 0;
+        let activeJobId = null;
+
+        // Sample Jobs Data
+        let jobs = [
+            {
+                id: 'job-101',
+                client: '1042 Oakridge Villa Residence',
+                address: '1042 Oakridge Blvd, Austin TX',
+                serviceType: 'Attic Open-Cell Spray Foam (R-30)',
+                crew: 'John Doe (Lead)',
+                status: 'In Progress',
+                tasks: [
+                    { id: 't1', name: 'Mask Windows, Vents & Access Hatch', materials: '6 Mil Poly, Blue Painter Tape', location: 'Attic Entry & Floor', completed: true },
+                    { id: 't2', name: 'Install Rafter Vent Chutes', materials: 'Rafter Baffles (x40), Staples', location: 'Eaves & Soffits', completed: true },
+                    { id: 't3', name: 'Apply Open-Cell Spray Foam (5.5")', materials: 'Open-Cell Drum Set A/B', location: 'Roof Deck & Gables', completed: false },
+                    { id: 't4', name: 'Trim Foam & Post-Thermal Check', materials: 'Foam Saw, Thermal Camera', location: 'Entire Attic Space', completed: false }
+                ]
+            },
+            {
+                id: 'job-102',
+                client: 'Apex Commercial Depot Bldg B',
+                address: '400 Industrial Pkwy, Austin TX',
+                serviceType: 'Wall Batt & Sound Insulation',
+                crew: 'John Doe (Lead)',
+                status: 'Assigned',
+                tasks: [
+                    { id: 't1', name: 'Inspect Stud Bays & Electrical Prep', materials: 'Safety Goggles, Dust Masks', location: 'Commercial Partition Walls', completed: false },
+                    { id: 't2', name: 'Install R-19 Kraft Fiberglass Batts', materials: 'R-19 Batts (35 Bundles)', location: 'Exterior Perimeter Bays', completed: false },
+                    { id: 't3', name: 'Sound Dampening Rockwool Fit', materials: 'Rockwool Safe\'n\'Sound', location: 'Executive Offices', completed: false }
+                ]
+            },
+            {
+                id: 'job-103',
+                client: 'Creekstone Ranch Subfloor',
+                address: '884 Creekstone Way, Round Rock TX',
+                serviceType: 'Crawlspace Vapor Barrier & Encapsulation',
+                crew: 'Mike Vance',
+                status: 'Assigned',
+                tasks: [
+                    { id: 't1', name: 'Grade Soil & Remove Debris', materials: 'Heavy Duty Bags, Rakes', location: 'Crawlspace Ground', completed: false },
+                    { id: 't2', name: 'Lay 20 Mil Antimicrobial Barrier', materials: '20 Mil Vapor Liner, Seam Tape', location: 'Ground & Piers', completed: false }
+                ]
+            }
+        ];
+
+        let inventory = [
+            { name: 'Open-Cell Spray Foam Kit (Set A/B)', category: 'Chemicals', stock: 14, allocated: 4, cost: '$1,650.00' },
+            { name: 'Closed-Cell Spray Foam Kit (Set A/B)', category: 'Chemicals', stock: 6, allocated: 2, cost: '$2,200.00' },
+            { name: 'R-19 Fiberglass Batt Bundles', category: 'Batts', stock: 120, allocated: 35, cost: '$72.00' },
+            { name: '20 Mil Poly Vapor Barrier Rolls', category: 'Poly Sheeting', stock: 18, allocated: 5, cost: '$140.00' },
+            { name: 'Rafter Air Vents / Baffles (Box 50)', category: 'Venting', stock: 25, allocated: 8, cost: '$45.00' }
+        ];
+
+        let shiftLogs = [
+            { date: 'Oct 11, 2026', shift: '07:30 AM - Present', duration: 'In Progress', job: '1042 Oakridge Villa', verified: true },
+            { date: 'Oct 10, 2026', shift: '07:00 AM - 04:15 PM', duration: '9.25 hrs', job: '400 Industrial Pkwy', verified: true },
+            { date: 'Oct 09, 2026', shift: '07:15 AM - 03:45 PM', duration: '8.50 hrs', job: '884 Creekstone Way', verified: true }
+        ];
+
+        // On Page Load Initialization
+        window.onload = function() {
+            renderShiftLogs();
+            renderInstallerJobs();
+            renderAdminJobs();
+            renderAdminInventory();
+            initRevenueChart();
+            setupCanvasEvents();
+            updateLiveTimestamp();
+            setInterval(updateLiveTimestamp, 60000);
+        };
+
+        // Live Clock timestamp
+        function updateLiveTimestamp() {
+            const now = new Date();
+            document.getElementById('current-timestamp-lbl').innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Role & User Switching
+        function setRole(role) {
+            currentRole = role;
+            if (role === 'installer') {
+                document.getElementById('nav-installer').classList.remove('hidden');
+                document.getElementById('nav-admin').classList.add('hidden');
+                document.getElementById('role-btn-installer').className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-amber-500 text-slate-950 shadow';
+                document.getElementById('role-btn-admin').className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-400 hover:text-white';
+                switchTab('timeclock');
+            } else {
+                document.getElementById('nav-admin').classList.remove('hidden');
+                document.getElementById('nav-installer').classList.add('hidden');
+                document.getElementById('role-btn-admin').className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 bg-purple-600 text-white shadow';
+                document.getElementById('role-btn-installer').className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 text-slate-400 hover:text-white';
+                switchAdminTab('revenue');
+            }
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('user-menu-dropdown').classList.toggle('hidden');
+        }
+
+        function switchUser(name, title, role, initials) {
+            document.getElementById('user-display-name').innerText = name;
+            document.getElementById('user-display-title').innerText = title;
+            document.getElementById('user-avatar').innerText = initials;
+            toggleUserMenu();
+            setRole(role);
+            showToast(`Switched user profile to ${name}`);
+        }
+
+        // Navigation Tabs Handling
+        function switchTab(tab) {
+            ['timeclock', 'schedule', 'profile'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = 'px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-slate-950 shadow flex items-center space-x-2';
+        }
+
+        function switchAdminTab(tab) {
+            ['revenue', 'dispatch', 'inventory', 'oversight'].forEach(t => {
+                document.getElementById(`aview-${t}`).classList.add('hidden');
+                document.getElementById(`atab-${t}`).className = 'px-4 py-2 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white hover:bg-slate-800 flex items-center space-x-2';
+            });
+            document.getElementById(`aview-${tab}`).classList.remove('hidden');
+            document.getElementById(`atab-${tab}`).className = 'px-4 py-2 rounded-xl text-xs font-bold transition bg-amber-500 text-slate-950 shadow flex items-center space-x-2';
+        }
+
+        // Timeclock & GPS Logic
+        function toggleClockState() {
+            isClockedIn = !isClockedIn;
+            const outerPulse = document.getElementById('clock-pulse-outer');
+            const icon = document.getElementById('clock-icon');
+            const mainTitle = document.getElementById('clock-main-title');
+            const subtitle = document.getElementById('clock-subtitle');
+            const gpsBadge = document.getElementById('clock-gps-badge');
+            const activeJobLbl = document.getElementById('clock-active-job-lbl');
+            const toggleBtn = document.getElementById('clock-toggle-btn');
+            const btnLbl = document.getElementById('clock-btn-lbl');
+            
+            const topClockInd = document.getElementById('top-clock-indicator');
+            const topClockDot = document.getElementById('top-clock-dot');
+            const topClockText = document.getElementById('top-clock-text');
+
+            if (isClockedIn) {
+                outerPulse.className = 'w-20 h-20 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500 flex items-center justify-center text-emerald-400 text-3xl shadow-2xl animate-pulse';
+                icon.className = 'fa-solid fa-satellite-dish';
+                mainTitle.innerText = 'Status: Clocked In & Active';
+                subtitle.innerText = 'Geofence active. Location coordinates being logged to shift report.';
+                gpsBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                gpsBadge.innerText = 'GPS Verified';
+                activeJobLbl.classList.remove('hidden');
+
+                toggleBtn.className = 'w-full md:w-auto px-8 py-4 rounded-2xl font-black text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-xl shadow-rose-950/50 transition-all flex items-center justify-center space-x-3 border border-rose-400/30';
+                btnLbl.innerText = 'Clock Out & Save Shift';
+
+                topClockInd.classList.remove('hidden');
+                topClockDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping';
+                topClockText.innerText = 'Clocked In';
+
+                // Start Timer
+                clockSeconds = 0;
+                clockTimerInterval = setInterval(updateShiftTimer, 1000);
+                showToast('Clocked In successfully. GPS tracking initiated.');
+            } else {
+                outerPulse.className = 'w-20 h-20 rounded-2xl bg-slate-800 border-2 border-rose-500/40 flex items-center justify-center text-rose-500 text-3xl shadow-2xl';
+                icon.className = 'fa-solid fa-power-off';
+                mainTitle.innerText = 'Status: Clocked Out';
+                subtitle.innerText = 'Clock in to automatically record location, job timer, and daily progress.';
+                gpsBadge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700';
+                gpsBadge.innerText = 'GPS Offline';
+                activeJobLbl.classList.add('hidden');
+
+                toggleBtn.className = 'w-full md:w-auto px-8 py-4 rounded-2xl font-black text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/50 transition-all flex items-center justify-center space-x-3 border border-emerald-400/30';
+                btnLbl.innerText = 'Clock In & Start GPS';
+
+                topClockDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+                topClockText.innerText = 'Clocked Out';
+
+                clearInterval(clockTimerInterval);
+                showToast('Clocked Out successfully. Shift logged to system.');
+            }
+        }
+
+        function updateShiftTimer() {
+            clockSeconds++;
+            const hrs = String(Math.floor(clockSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((clockSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(clockSeconds % 60).padStart(2, '0');
+            const formatted = `${hrs}:${mins}:${secs}`;
+            document.getElementById('shift-timer-display').innerText = formatted;
+            document.getElementById('top-clock-timer').innerText = formatted;
+        }
+
+        function renderShiftLogs() {
+            const container = document.getElementById('shift-logs-container');
+            container.innerHTML = shiftLogs.map(log => `
+                <div class="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+                    <div class="space-y-0.5">
+                        <p class="font-bold text-white">${log.job}</p>
+                        <p class="text-[10px] text-slate-400">${log.date} • ${log.shift}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-amber-400 font-mono">${log.duration}</span>
+                        <p class="text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-satellite mr-1"></i>GPS Verified</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Job & Task Breakdown Rendering
+        function renderInstallerJobs() {
+            const grid = document.getElementById('installer-jobs-grid');
+            grid.innerHTML = jobs.map(job => {
+                const total = job.tasks.length;
+                const completed = job.tasks.filter(t => t.completed).length;
+                const pct = Math.round((completed / total) * 100);
+                const isComplete = completed === total;
+
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between space-y-4">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] px-2.5 py-1 rounded-full ${isComplete ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'} font-bold uppercase tracking-wider">
+                                    ${isComplete ? 'Completed & Signed' : job.status}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-bold">${completed}/${total} Tasks</span>
+                            </div>
+                            <h3 class="font-extrabold text-base text-white">${job.client}</h3>
+                            <p class="text-xs text-slate-400 flex items-center"><i class="fa-solid fa-location-dot text-amber-500 mr-2"></i>${job.address}</p>
+                            
+                            <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-xs">
+                                <span class="text-slate-400 block text-[10px]">Service & Specs:</span>
+                                <strong class="text-slate-200">${job.serviceType}</strong>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800">
+                                <div class="bg-amber-500 h-full rounded-full transition-all" style="width: ${pct}%"></div>
+                            </div>
+                            <button onclick="openTaskModal('${job.id}')" class="w-full py-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-white font-bold rounded-2xl text-xs transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-list-check text-amber-500"></i>
+                                <span>Task Breakdown & Materials</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openTaskModal(jobId) {
+            activeJobId = jobId;
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+
+            document.getElementById('mtb-title').innerText = job.serviceType;
+            document.getElementById('mtb-subtitle').innerText = `${job.client} • ${job.address}`;
+            document.getElementById('mtb-crew').innerText = job.crew;
+
+            renderModalTaskList(job);
+            document.getElementById('modal-task-breakdown').classList.remove('hidden');
+        }
+
+        function renderModalTaskList(job) {
+            const total = job.tasks.length;
+            const completed = job.tasks.filter(t => t.completed).length;
+            const pct = Math.round((completed / total) * 100);
+
+            document.getElementById('mtb-progress-lbl').innerText = `${completed} / ${total} Tasks (${pct}%)`;
+            document.getElementById('mtb-progress-bar').style.width = `${pct}%`;
+
+            const listContainer = document.getElementById('mtb-tasks-list');
+            listContainer.innerHTML = job.tasks.map(task => `
+                <div class="p-4 bg-slate-950 rounded-2xl border ${task.completed ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800'} flex items-start space-x-3 transition">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${job.id}', '${task.id}')" class="mt-1 w-4 h-4 accent-amber-500 rounded cursor-pointer">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-xs font-bold ${task.completed ? 'text-emerald-300 line-through' : 'text-white'}">${task.name}</p>
+                        <div class="flex flex-wrap gap-3 text-[10px] text-slate-400 pt-1">
+                            <span><i class="fa-solid fa-boxes-packing text-amber-500 mr-1"></i>Materials: ${task.materials}</span>
+                            <span><i class="fa-solid fa-compass text-amber-500 mr-1"></i>Location: ${task.location}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const banner = document.getElementById('mtb-walkthrough-banner');
+            if (completed === total) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function toggleTask(jobId, taskId) {
+            const job = jobs.find(j => j.id === jobId);
+            if (!job) return;
+            const task = job.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                renderModalTaskList(job);
+                renderInstallerJobs();
+                renderAdminJobs();
+                showToast('Task status updated');
+            }
+        }
+
+        function closeTaskModal() {
+            document.getElementById('modal-task-breakdown').classList.add('hidden');
+        }
+
+        // Customer Signature Canvas & Walkthrough
+        let canvas, ctx, isDrawing = false;
+
+        function setupCanvasEvents() {
+            canvas = document.getElementById('sig-canvas');
+            if (!canvas) return;
+            ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+
+            canvas.addEventListener('mousedown', (e) => {
+                isDrawing = true;
+                ctx.beginPath();
+                const rect = canvas.getBoundingClientRect();
+                ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                ctx.stroke();
+            });
+
+            canvas.addEventListener('mouseup', () => isDrawing = false);
+            canvas.addEventListener('mouseleave', () => isDrawing = false);
+        }
+
+        function clearSignatureCanvas() {
+            if (ctx && canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function openWalkthroughModal() {
+            closeTaskModal();
+            document.getElementById('modal-walkthrough').classList.remove('hidden');
+            setTimeout(setupCanvasEvents, 100);
+        }
+
+        function closeWalkthroughModal() {
+            document.getElementById('modal-walkthrough').classList.add('hidden');
+        }
+
+        function validateWalkthrough() {
+            const checks = document.querySelectorAll('.wt-check-item');
+            const allChecked = Array.from(checks).every(c => c.checked);
+            const btn = document.getElementById('btn-finalize-job');
+            if (allChecked) {
+                btn.disabled = false;
+                btn.className = 'px-5 py-2 bg-amber-500 hover:bg-amber-450 text-slate-950 font-bold rounded-xl text-xs transition cursor-pointer shadow';
+            } else {
+                btn.disabled = true;
+                btn.className = 'px-5 py-2 bg-amber-500/40 text-slate-950 font-bold rounded-xl text-xs transition cursor-not-allowed';
+            }
+        }
+
+        function finalizeJobSignoff() {
+            const clientName = document.getElementById('customer-name-input').value || 'Authorized Customer';
+            const job = jobs.find(j => j.id === activeJobId);
+            if (job) {
+                job.status = 'Completed & Signed';
+            }
+            closeWalkthroughModal();
+            renderInstallerJobs();
+            renderAdminJobs();
+            showToast(`Job successfully completed & digitally signed by ${clientName}!`);
+        }
+
+        // Admin Management Functions
+        function renderAdminJobs() {
+            const tbody = document.getElementById('admin-jobs-table-body');
+            tbody.innerHTML = jobs.map(job => {
+                const total = job.tasks.length;
+                const completed = job.tasks.filter(t => t.completed).length;
+                const isComplete = completed === total;
+
+                return `
+                    <tr class="hover:bg-slate-950/50 transition">
+                        <td class="p-4">
+                            <p class="font-bold text-white">${job.client}</p>
+                            <p class="text-[10px] text-slate-400">${job.address}</p>
+                        </td>
+                        <td class="p-4 text-slate-300 font-semibold">${job.serviceType}</td>
+                        <td class="p-4 text-slate-300">${job.crew}</td>
+                        <td class="p-4"><span class="text-slate-300 font-bold">${completed}/${total} Tasks</span></td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full ${isComplete ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'} text-[10px] font-bold">
+                                ${isComplete ? 'Completed & Signed' : job.status}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right">
+                            <button onclick="openTaskModal('${job.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold">Inspect</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderAdminInventory() {
+            const tbody = document.getElementById('admin-inventory-table-body');
+            tbody.innerHTML = inventory.map(item => `
+                <tr class="hover:bg-slate-950/50 transition">
+                    <td class="p-4 font-bold text-white">${item.name}</td>
+                    <td class="p-4 text-slate-300">${item.category}</td>
+                    <td class="p-4 text-emerald-400 font-bold">${item.stock} Units</td>
+                    <td class="p-4 text-amber-400 font-bold">${item.allocated} Units</td>
+                    <td class="p-4"><span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-bold">Sufficient</span></td>
+                    <td class="p-4 text-right text-slate-200 font-mono font-bold">${item.cost}</td>
+                </tr>
+            `).join('');
+        }
+
+        function triggerDispatchModal() {
+            showToast('Opening Job Dispatch Wizard...');
+        }
+
+        function triggerRestockModal() {
+            showToast('Opening Material Restock Form...');
+        }
+
+        // Chart.js Revenue Initialization
+        function initRevenueChart() {
+            const ctxChart = document.getElementById('revenueChart');
+            if (!ctxChart) return;
+
+            new Chart(ctxChart, {
+                type: 'bar',
+                data: {
+                    labels: ['Spray Foam (Open Cell)', 'Spray Foam (Closed Cell)', 'Fiberglass Batts', 'Blown-In Cellulose', 'Vapor Barriers'],
+                    datasets: [{
+                        label: 'Gross Revenue ($)',
+                        data: [32400, 18500, 8200, 4100, 1600],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Notification Helper
+        function showToast(message) {
+            const banner = document.getElementById('toast-banner');
+            document.getElementById('toast-text').innerText = message;
+            banner.classList.remove('hidden');
+            setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
